@@ -6,20 +6,19 @@
 #include <termios.h>
 
 bool gameOver;
-
-const int width = 20;
-const int height = 4;
-int score;
+const int width = 20;   //screenwidth
+const int height = 4;   //screenheight
+int score;      //score
 int x, y, foodY, foodX; //Head Position (x,y) Food Position (foodX, foodY)
 int tailX[100];
 int tailY[100];
-int nTail;
-int speed;// = 200000;
+int nTail;      //schwanz
+int speed;      //difficulty
 enum eDirection {
     STOP = 0, LEFT, RIGHT, UP, DOWN
 } dir;
 
-int khbit(void);
+int khBit(void);
 
 void Setup() {
 
@@ -66,15 +65,11 @@ void Draw() {
                         printf("o");
                         print = true;
                     }
-
                 }
                 if (!print) {
                     printf(" ");
                 }
-
             }
-
-
         }
         printf("\n");
     }
@@ -86,6 +81,7 @@ void Draw() {
 
 }
 
+//logic of snake
 void Logic() {
 
     int prevX = tailX[0];
@@ -94,6 +90,8 @@ void Logic() {
 
     tailX[0] = x;
     tailY[0] = y;
+
+    //Movement Tail
     for (int i = 1; i < nTail; i++) {
         prev2X = tailX[i];
         prev2Y = tailY[i];
@@ -103,6 +101,7 @@ void Logic() {
         prevY = prev2Y;
     }
 
+    //movement head
     switch (dir) {
         case LEFT:
             x--;
@@ -120,15 +119,22 @@ void Logic() {
             break;
     }
 
+    //collision at walls
     /*   if(x > width ||  x < 0 || y > height || y < 0)
            gameOver = true;*/
+
+    //no collision at walls
     if (x >= width) x = 0; else if (x < 0) x = width - 1;
     if (y >= height) y = 0; else if (y < 0) y = height - 1;
+
+    //collision with tail
     for (int i = 0; i < nTail; i++) {
         if (tailX[i] == x && tailY[i] == y) {
             gameOver = true;
         }
     }
+
+    //score +10, spawn new food, increment tail
     if (x == foodX && y == foodY && !(nTail == 'o')) {
         score += 10;
         foodX = rand() % width;
@@ -136,22 +142,26 @@ void Logic() {
         nTail++;
     }
 
-    if(score >= 0){
+    //difficulty
+    if (score >= 0) {
         speed = 200000;
-    } if(score > 40){
+    }
+    if (score > 40) {
         speed = 150000;
-
-    } if(score > 80){
+    }
+    if (score > 80) {
         speed = 150000;
-    }if(score > 120){
+    }
+    if (score > 120) {
         speed = 100000;
-    } if(score > 160) {
+    }
+    if (score > 160) {
         speed = 50000;
     }
 
-
-
+    //gameover screen and restart
     if (gameOver == true) {
+        system("clear");
         printf("--------------------\n");
         printf("-------~Game~-------\n");
         printf("-------~Over~-------\n");
@@ -159,13 +169,12 @@ void Logic() {
         getchar();
         Setup();
     }
-
 }
 
 
-void Input() { //Buttons
+void Input() { //Buttons a:left,d:right,s:down,w:up,x:stop game
 
-    if (khbit()) {
+    if (khBit()) {
         switch (getchar()) {
             case 'a':
                 dir = LEFT;
@@ -191,16 +200,19 @@ int main() {
 
     Setup();
     while (!gameOver) {
+        Input();        //input
+        Logic();        //logic
         Draw();
-        Input();
-        Logic();
-        usleep(speed);
+        usleep(speed); //difficulty
     }
 
     return 0;
 }
 
-int khbit(void) {
+
+//linux khBit no "conio.h" on linux :(
+
+int khBit(void) {
     struct termios oldt, newt;
     int ch;
     int oldf;

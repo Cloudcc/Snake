@@ -25,7 +25,7 @@ enum eDirection {
     STOP, LEFT, RIGHT, UP, DOWN
 } dir;
 
-int khbit();
+int khBit();
 
 static volatile int* HEX_ptr;
 static volatile int* KEY_ptr;
@@ -116,18 +116,19 @@ void Logic() {
         	gameOver = true;
         }
     }
+
     if (x == foodX && y == foodY){
     	score += 10;
         foodX = rand() % width;
         foodY = rand() % height;
         nTail++;
     }
+
     if (score >= 0) {
         speed = 200000;
     }
     if (score > 40) {
         speed = 150000;
-
     }
     if (score > 80) {
         speed = 150000;
@@ -140,17 +141,19 @@ void Logic() {
     }
 
     if (gameOver == true) {
+
+        fprintf(display, "c");
         fprintf(display, "s--------------------\n");
         fprintf(display, "s-------~Game~-------\n");
         fprintf(display, "s-------~Over~-------\n");
         fprintf(display, "s--Restart-ANY-KEY---\n");
-        khbit();
+        khBit();
         Setup();
     }
 }
 
 void Input() {
-    if (khbit()) {
+    if (khBit()) {
         switch (*KEY_ptr){
             case 0x08:
                 dir = LEFT;
@@ -198,7 +201,7 @@ int main() {
     return 0;
 }
 
-int khbit(void) {
+int khBit(void) {
 	return *KEY_ptr;
 }
 
