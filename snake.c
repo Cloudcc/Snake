@@ -3,7 +3,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <fcntl.h>
-#include "termios.h"
+#include <termios.h>
 
 bool gameOver;
 
@@ -152,10 +152,10 @@ void Logic() {
 
 
     if (gameOver == true) {
-        printf("s--------------------\n");
-        printf("s-------~Game~-------\n");
-        printf("s-------~Over~-------\n");
-        printf("s--Restart-ANY-KEY---\n");
+        printf("--------------------\n");
+        printf("-------~Game~-------\n");
+        printf("-------~Over~-------\n");
+        printf("--Restart-ANY-KEY---\n");
         getchar();
         Setup();
     }

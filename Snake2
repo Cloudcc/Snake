@@ -20,6 +20,7 @@ int x, y, foodY, foodX;
 int tailX[100];
 int tailY[100];
 int nTail;
+int speed;
 enum eDirection {
     STOP, LEFT, RIGHT, UP, DOWN
 } dir;
@@ -111,7 +112,7 @@ void Logic() {
     if (x >= width) x = 0; else if (x < 0) x = width - 1;
     if (y >= height) y = 0; else if (y < 0) y = height - 1;
     for (int i = 0; i < nTail; i++){
-        if (tailY[i] == x && tailX[i] == y){
+        if (tailX[i] == x && tailY[i] == y) {
         	gameOver = true;
         }
     }
@@ -120,6 +121,31 @@ void Logic() {
         foodX = rand() % width;
         foodY = rand() % height;
         nTail++;
+    }
+    if (score >= 0) {
+        speed = 200000;
+    }
+    if (score > 40) {
+        speed = 150000;
+
+    }
+    if (score > 80) {
+        speed = 150000;
+    }
+    if (score > 120) {
+        speed = 100000;
+    }
+    if (score > 160) {
+        speed = 50000;
+    }
+
+    if (gameOver == true) {
+        fprintf(display, "s--------------------\n");
+        fprintf(display, "s-------~Game~-------\n");
+        fprintf(display, "s-------~Over~-------\n");
+        fprintf(display, "s--Restart-ANY-KEY---\n");
+        khbit();
+        Setup();
     }
 }
 
@@ -164,7 +190,7 @@ int main() {
         Input();
         Logic();
 		Draw();
-        usleep(200 * 1000);
+        usleep(speed);
     }
     unmap_physical(LW_virtual, LW_BRIDGE_SPAN);
    	close_physical(fd);
