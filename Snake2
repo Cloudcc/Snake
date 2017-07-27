@@ -1,0 +1,249 @@
+//
+// Created by Tobias Heigl on 26.07.17.
+//
+
+#include <stdio.h>
+#include <stdbool.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <fcntl.h>
+#include <time.h>
+#include <sys/mman.h>
+#include <sys/types.h>
+#include "address_map_arm.h"
+
+bool gameOver;
+const int width = 20;
+const int height = 4;
+int score;
+int x, y, foodY, foodX;
+int tailX[100];
+int tailY[100];
+int nTail;
+enum eDirection {
+    STOP, LEFT, RIGHT, UP, DOWN
+} dir;
+
+int khbit();
+
+static volatile int* HEX_ptr;
+static volatile int* KEY_ptr;
+static FILE *display;
+
+int open_physical(int);
+void *map_physical(int, unsigned int, unsigned int);
+void close_physical(int);
+int unmap_physical(void*, unsigned int);
+
+void write_7seg(int);
+
+void Setup() {
+    gameOver = false;
+    dir = STOP;
+    x = width / 2;
+    y = height / 2;
+    foodX = rand() % width; //0 to width -1
+    foodY = rand() % height;
+    score = 0;
+}
+
+void Draw() {
+    fprintf(display, "c");
+    for (int i = 0; i < height; i++) {
+        for (int j = 0; j < width; j++) {
+            if (i == y && j == x){
+                fprintf(display, "sO");
+            } else if(i == foodY && j == foodX) {
+                fprintf(display, "s*");
+            } else {
+                bool print = false;
+                for(int k = 0; k < nTail; k++) {
+                    if (tailX[k] == j && tailY[k] == i) {
+                        fprintf(display, "so");
+                        print = true;
+                    }
+                }
+                if (!print) {
+                    fprintf(display, "s ");
+                }
+            }
+            if (j == width) {
+                fprintf(display, "s ");
+            }
+        }
+    }
+    write_7seg(score);
+}
+
+void Logic() {
+    int prevX = tailX[0];
+    int prevY = tailY[0];
+    int prev2X, prev2Y;
+
+    tailX[0] = x;
+    tailY[0] = y;
+    for (int i = 1; i < nTail; i++){
+        prev2X = tailX[i];
+        prev2Y = tailY[i];
+        tailX[i] = prevX;
+        tailY[i] = prevY;
+        prevX = prev2X;
+        prevY = prev2Y;
+    }
+    switch (dir) {
+        case LEFT:
+            x--;
+            break;
+        case RIGHT:
+            x++;
+            break;
+        case UP:
+            y--;
+            break;
+        case DOWN:
+            y++;
+            break;
+        default:
+            break;
+    }
+ /*   if(x > width ||  x < 0 || y > height || y < 0)
+        gameOver = true;*/
+    if (x >= width) x = 0; else if (x < 0) x = width - 1;
+    if (y >= height) y = 0; else if (y < 0) y = height - 1;
+    for (int i = 0; i < nTail; i++){
+        if (tailY[i] == x && tailX[i] == y){
+        	gameOver = true;
+        }
+    }
+    if (x == foodX && y == foodY){
+    	score += 10;
+        foodX = rand() % width;
+        foodY = rand() % height;
+        nTail++;
+    }
+}
+
+void Input() {
+    if (khbit()) {
+        switch (*KEY_ptr){
+            case 0x08:
+                dir = LEFT;
+                break;
+            case 0x04:
+                dir = RIGHT;
+                break;
+            case 0x02:
+                dir = UP;
+                break;
+            case 0x01:
+                dir = DOWN;
+                break;
+        }
+    }
+}
+
+int main() {
+	display = fopen("/dev/mod_display", "w");
+	if (!display) {
+		return -1;
+	}
+	setbuf(display, NULL);
+	fprintf(display, "x00");
+	int fd = -1;
+   	void *LW_virtual;
+   	if ((fd = open_physical (fd)) == -1) {
+      	return -1;
+    }
+   	if (!(LW_virtual = map_physical(fd, LW_BRIDGE_BASE, LW_BRIDGE_SPAN))) {
+      	return -1;
+    }
+    HEX_ptr = (unsigned int*) (LW_virtual + HEX3_HEX0_BASE);
+    KEY_ptr = (unsigned int*) (LW_virtual + KEY_BASE);
+    Setup();
+    while (!gameOver) {
+        Input();
+        Logic();
+		Draw();
+        usleep(200 * 1000);
+    }
+    unmap_physical(LW_virtual, LW_BRIDGE_SPAN);
+   	close_physical(fd);
+   	fclose(display);
+    return 0;
+}
+
+int khbit(void) {
+	return *KEY_ptr;
+}
+
+int open_physical (int fd) {
+	if (fd == -1) {
+    	if ((fd = open("/dev/mem", (O_RDWR | O_SYNC))) == -1) {
+        	printf("ERROR: could not open \"/dev/mem\"...\n");
+         	return -1;
+      	}
+   	}
+   	return fd;
+}
+
+void close_physical (int fd) {
+   close(fd);
+}
+
+void* map_physical(int fd, unsigned int base, unsigned int span) {
+	void *virtual_base;
+	virtual_base = mmap(NULL, span, (PROT_READ | PROT_WRITE), MAP_SHARED, fd, base);
+   	if (virtual_base == MAP_FAILED) {
+    	printf("ERROR: mmap() failed...\n");
+      	close(fd);
+      	return NULL;
+   	}
+   	return virtual_base;
+}
+
+int unmap_physical(void * virtual_base, unsigned int span) {
+	if (munmap(virtual_base, span) != 0) {
+    	printf("ERROR: munmap() failed...\n");
+      	return -1;
+   	}
+   	return 0;
+}
+
+int get_7seg_flags(int value) {
+	switch (value) {
+		case 0:
+			return 0x01 | 0x02 | 0x04 | 0x8 | 0x10 | 0x20;
+		case 1:
+			return 0x02 | 0x04;
+		case 2:
+			return 0x01 | 0x02 | 0x08 | 0x10 | 0x40;
+		case 3:
+			return 0x01 | 0x02 | 0x04 | 0x08 | 0x40;
+		case 4:
+			return 0x02 | 0x04 | 0x20 | 0x40;
+		case 5:
+			return 0x01 | 0x04 | 0x08 | 0x20 | 0x40;
+		case 6:
+			return 0x01 | 0x04 | 0x08 | 0x10 | 0x20 | 0x40;
+		case 7:
+			return 0x01 | 0x02 | 0x04;
+		case 8:
+			return 0x01 | 0x02 | 0x04 | 0x08 | 0x10 | 0x20 | 0x40;
+		case 9:
+			return 0x01 | 0x02 | 0x04 | 0x08 | 0x20 | 0x40;
+	}
+	return 0;
+}
+
+void write_7seg(int value) {
+	int i0 = value % 10;
+	int i1 = (value / 10) % 10;
+	int i2 = (value / 100) % 10;
+	int i3 = (value / 1000) % 10;
+	int flags = 0;
+	flags |= get_7seg_flags(i0);
+	flags |= get_7seg_flags(i1) << 8;
+	flags |= get_7seg_flags(i2) << 16;
+	flags |= get_7seg_flags(i3) << 24;
+	*HEX_ptr = flags;
+}
