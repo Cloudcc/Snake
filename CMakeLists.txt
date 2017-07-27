@@ -3,5 +3,5 @@ project(SnakeV2)
 
 set(CMAKE_C_STANDARD 99)
 
-set(SOURCE_FILES snake.c Snake2)
+set(SOURCE_FILES snake.c Snake2 snake.h)
 add_executable(SnakeV2 ${SOURCE_FILES})

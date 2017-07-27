@@ -1,26 +1,25 @@
-#include <stdio.h>
-#include <stdbool.h>
-#include <stdlib.h>
-#include <unistd.h>
-#include <fcntl.h>
-#include <termios.h>
+#include "snake.h"
 
 bool gameOver;
+
 const int width = 20;   //screenwidth
 const int height = 4;   //screenheight
+
 int score;      //score
 int x, y, foodY, foodX; //Head Position (x,y) Food Position (foodX, foodY)
+
 int tailX[100];
 int tailY[100];
 int nTail;      //schwanz
-int speed;      //difficulty
+
+int difficulty;      //difficulty in speed
 enum eDirection {
     STOP = 0, LEFT, RIGHT, UP, DOWN
 } dir;
 
 int khBit(void);
 
-void Setup() {
+void setup() {
 
     gameOver = false;
     nTail = 0;
@@ -33,7 +32,7 @@ void Setup() {
 
 }
 
-void Draw() {
+void draw() {
     /* for(int i = 0; i < width; i++){
          printf("#");
      }
@@ -82,7 +81,7 @@ void Draw() {
 }
 
 //logic of snake
-void Logic() {
+void logic() {
 
     int prevX = tailX[0];
     int prevY = tailY[0];
@@ -144,19 +143,19 @@ void Logic() {
 
     //difficulty
     if (score >= 0) {
-        speed = 200000;
+        difficulty = 200000;
     }
     if (score > 40) {
-        speed = 150000;
+        difficulty = 150000;
     }
     if (score > 80) {
-        speed = 150000;
+        difficulty = 150000;
     }
     if (score > 120) {
-        speed = 100000;
+        difficulty = 100000;
     }
     if (score > 160) {
-        speed = 50000;
+        difficulty = 50000;
     }
 
     //gameover screen and restart
@@ -166,13 +165,14 @@ void Logic() {
         printf("-------~Game~-------\n");
         printf("-------~Over~-------\n");
         printf("--Restart-ANY-KEY---\n");
+
         getchar();
-        Setup();
+        setup();
     }
 }
 
 
-void Input() { //Buttons a:left,d:right,s:down,w:up,x:stop game
+void input() { //Buttons a:left,d:right,s:down,w:up,x:stop game
 
     if (khBit()) {
         switch (getchar()) {
@@ -198,12 +198,12 @@ void Input() { //Buttons a:left,d:right,s:down,w:up,x:stop game
 
 int main() {
 
-    Setup();
+    setup();
     while (!gameOver) {
-        Input();        //input
-        Logic();        //logic
-        Draw();
-        usleep(speed); //difficulty
+        input();        //input
+        logic();        //logic
+        draw();
+        usleep(difficulty); //difficulty
     }
 
     return 0;

@@ -20,7 +20,7 @@ int x, y, foodY, foodX;
 int tailX[100];
 int tailY[100];
 int nTail;
-int speed;
+int difficulty;
 enum eDirection {
     STOP, LEFT, RIGHT, UP, DOWN
 } dir;
@@ -38,7 +38,7 @@ int unmap_physical(void*, unsigned int);
 
 void write_7seg(int);
 
-void Setup() {
+void setup() {
     gameOver = false;
     dir = STOP;
     x = width / 2;
@@ -48,7 +48,7 @@ void Setup() {
     score = 0;
 }
 
-void Draw() {
+void draw() {
     fprintf(display, "c");
     for (int i = 0; i < height; i++) {
         for (int j = 0; j < width; j++) {
@@ -76,7 +76,7 @@ void Draw() {
     write_7seg(score);
 }
 
-void Logic() {
+void logic() {
     int prevX = tailX[0];
     int prevY = tailY[0];
     int prev2X, prev2Y;
@@ -125,19 +125,19 @@ void Logic() {
     }
 
     if (score >= 0) {
-        speed = 200000;
+        difficulty = 200000;
     }
     if (score > 40) {
-        speed = 150000;
+        difficulty = 150000;
     }
     if (score > 80) {
-        speed = 150000;
+        difficulty = 150000;
     }
     if (score > 120) {
-        speed = 100000;
+        difficulty = 100000;
     }
     if (score > 160) {
-        speed = 50000;
+        difficulty = 50000;
     }
 
     if (gameOver == true) {
@@ -148,11 +148,11 @@ void Logic() {
         fprintf(display, "s-------~Over~-------\n");
         fprintf(display, "s--Restart-ANY-KEY---\n");
         khBit();
-        Setup();
+        setup();
     }
 }
 
-void Input() {
+void input() {
     if (khBit()) {
         switch (*KEY_ptr){
             case 0x08:
@@ -188,12 +188,12 @@ int main() {
     }
     HEX_ptr = (unsigned int*) (LW_virtual + HEX3_HEX0_BASE);
     KEY_ptr = (unsigned int*) (LW_virtual + KEY_BASE);
-    Setup();
+    setup();
     while (!gameOver) {
-        Input();
-        Logic();
-		Draw();
-        usleep(speed);
+        input();
+        logic();
+        draw();
+        usleep(difficulty);
     }
     unmap_physical(LW_virtual, LW_BRIDGE_SPAN);
    	close_physical(fd);
