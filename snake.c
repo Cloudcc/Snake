@@ -1,5 +1,6 @@
 #include "snake.h"
 
+
 bool gameOver;
 
 const int width = 20;   //screenwidth
@@ -13,13 +14,22 @@ int tailY[100];
 int nTail;      //schwanz
 
 int difficulty;      //difficulty in speed
+
+
 enum eDirection {
     STOP = 0, LEFT, RIGHT, UP, DOWN
 } dir;
 
+
+int min, sec, msec;
+
 int khBit(void);
 
 void setup() {
+
+    min = 0;
+    sec = 0;
+    msec = 0;
 
     gameOver = false;
     nTail = 0;
@@ -73,10 +83,11 @@ void draw() {
         printf("\n");
     }
 
+
     /*   for (int i = 0; i < height; i++) { // Kann  man wohl wegmachen
            printf("X");
        }*/
-    printf("%i\n", score); // 7Segment
+    printf("Score: %i\n%i:%i:%i\n", score, min, sec, msec); // 7Segment
 
 }
 
@@ -165,10 +176,21 @@ void logic() {
         printf("-------~Game~-------\n");
         printf("-------~Over~-------\n");
         printf("--Restart-ANY-KEY---\n");
-
         getchar();
         setup();
     }
+
+    //timer
+    msec++;
+    if (msec == 100) {
+        msec = 0;
+        sec++;
+        if (sec == 60) {
+            sec = 0;
+            min++;
+        }
+    }
+
 }
 
 
@@ -188,16 +210,13 @@ void input() { //Buttons a:left,d:right,s:down,w:up,x:stop game
             case 's':
                 dir = DOWN;
                 break;
-            case 'x':
-                gameOver = true;
-                break;
         }
+
     }
 
 }
 
 int main() {
-
     setup();
     while (!gameOver) {
         input();        //input
@@ -205,7 +224,6 @@ int main() {
         draw();
         usleep(difficulty); //difficulty
     }
-
     return 0;
 }
 
@@ -213,7 +231,9 @@ int main() {
 //linux khBit no "conio.h" on linux :(
 
 int khBit(void) {
+
     struct termios oldt, newt;
+
     int ch;
     int oldf;
 
@@ -233,3 +253,8 @@ int khBit(void) {
     }
     return 0;
 }
+
+
+
+
+
